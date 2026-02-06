@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kth Smallest in BST</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 60px;
+            text-align: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .visualization {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #tree-canvas {
+            max-width: 100%;
+        }
+
+        .result {
+            background: #edf2f7;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-text {
+            font-size: 16px;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .traversal {
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        .highlight {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .info-box {
+            background: #e6fffa;
+            border-left: 4px solid #38b2ac;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #234e52;
+        }
+
+        .info-box strong {
+            color: #234e52;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌳 Kth Smallest Element in BST</h1>
+        <p class="subtitle">In-order traversal finds elements in sorted order!</p>
+
+        <div class="controls">
+            <div class="input-group">
+                <input type="number" id="nodeValue" placeholder="Value" min="1" max="99">
+                <button class="btn-primary" onclick="insertNode()">Insert</button>
+            </div>
+            <div class="input-group">
+                <input type="number" id="kValue" placeholder="K" min="1" value="1">
+                <button class="btn-secondary" onclick="findKth()">Find Kth</button>
+            </div>
+            <button class="btn-danger" onclick="clearTree()">Clear</button>
+        </div>
+
+        <div class="visualization">
+            <canvas id="tree-canvas" width="800" height="300"></canvas>
+        </div>
+
+        <div class="result" id="result">
+            <div class="result-text" id="resultText"></div>
+            <div class="traversal" id="traversalText"></div>
+        </div>
+
+        <div class="info-box">
+            <strong>💡 How it works:</strong> In-order traversal (Left → Root → Right) visits BST nodes in ascending order. 
+            The Kth smallest is simply the Kth node visited! Time: O(K), Space: O(H)
+        </div>
+    </div>
+
+    <script>
+        class TreeNode {
+            constructor(val) {
+                this.val = val;
+                this.left = null;
+                this.right = null;
+            }
+        }
+
+        let root = null;
+        const canvas = document.getElementById('tree-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Sample tree
+        function initSampleTree() {
+            const values = [15, 10, 20, 8, 12, 17, 25];
+            values.forEach(val => {
+                root = insert(root, val);
+            });
+            drawTree();
+        }
+
+        function insert(node, val) {
+            if (!node) return new TreeNode(val);
+            if (val < node.val) {
+                node.left = insert(node.left, val);
+            } else if (val > node.val) {
+                node.right = insert(node.right, val);
+            }
+            return node;
+        }
+
+        function insertNode() {
+            const val = parseInt(document.getElementById('nodeValue').value);
+            if (!val || val < 1 || val > 99) {
+                alert('Enter a value between 1-99');
+                return;
+            }
+            root = insert(root, val);
+            drawTree();
+            document.getElementById('nodeValue').value = '';
+            hideResult();
+        }
+
+        function findKth() {
+            const k = parseInt(document.getElementById('kValue').value);
+            if (!k || k < 1) {
+                alert('Enter a valid K value');
+                return;
+            }
+
+            const traversal = [];
+            let count = 0;
+            let result = null;
+
+            function inorder(node) {
+                if (!node || result !== null) return;
+                
+                inorder(node.left);
+                
+                count++;
+                traversal.push(node.val);
+                if (count === k) {
+                    result = node.val;
+                    return;
+                }
+                
+                inorder(node.right);
+            }
+
+            inorder(root);
+
+            if (result !== null) {
+                document.getElementById('resultText').innerHTML = 
+                    `The <span class="highlight">${k}${getOrdinal(k)} smallest</span> element is: <span class="highlight">${result}</span>`;
+                document.getElementById('traversalText').innerHTML = 
+                    `In-order traversal: [${traversal.map((v, i) => i === k-1 ? `<span class="highlight">${v}</span>` : v).join(', ')}]`;
+                document.getElementById('result').classList.add('show');
+                drawTree(result);
+            } else {
+                alert(`Tree has fewer than ${k} nodes!`);
+            }
+        }
+
+        function getOrdinal(n) {
+            const s = ["th", "st", "nd", "rd"];
+            const v = n % 100;
+            return (s[(v - 20) % 10] || s[v] || s[0]);
+        }
+
+        function hideResult() {
+            document.getElementById('result').classList.remove('show');
+        }
+
+        function clearTree() {
+            root = null;
+            drawTree();
+            hideResult();
+        }
+
+        function drawTree(highlightVal = null) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (!root) {
+                ctx.fillStyle = '#a0aec0';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Tree is empty. Insert some nodes!', canvas.width/2, canvas.height/2);
+                return;
+            }
+
+            const levels = getHeight(root);
+            const startX = canvas.width / 2;
+            const startY = 40;
+            const levelGap = 80;
+
+            function draw(node, x, y, offset) {
+                if (!node) return;
+
+                // Draw lines to children
+                ctx.strokeStyle = '#cbd5e0';
+                ctx.lineWidth = 2;
+                if (node.left) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x - offset, y + levelGap);
+                    ctx.stroke();
+                }
+                if (node.right) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + offset, y + levelGap);
+                    ctx.stroke();
+                }
+
+                // Draw node
+                ctx.beginPath();
+                ctx.arc(x, y, 25, 0, 2 * Math.PI);
+                ctx.fillStyle = node.val === highlightVal ? '#48bb78' : '#667eea';
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Draw value
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(node.val, x, y);
+
+                // Recursive draw
+                draw(node.left, x - offset, y + levelGap, offset / 2);
+                draw(node.right, x + offset, y + levelGap, offset / 2);
+            }
+
+            draw(root, startX, startY, canvas.width / 4);
+        }
+
+        function getHeight(node) {
+            if (!node) return 0;
+            return 1 + Math.max(getHeight(node.left), getHeight(node.right));
+        }
+
+        // Initialize with sample tree
+        initSampleTree();
+    </script>
+</body>
+</html>
